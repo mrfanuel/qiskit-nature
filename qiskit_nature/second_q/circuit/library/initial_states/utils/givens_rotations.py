@@ -119,10 +119,16 @@ def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
         (gate, qubits) pairs describing the operations, where the qubits
         are provided in a tuple
     """
+    # compute the right decomposition of W as a product of particle-hole and Givens
+    # and compute the "left unitary matrix V"
     right_decomposition, left_unitary = fermionic_gaussian_decomposition_jw(
         register, transformation_matrix
     )
     
+    # decompose the left unitary matrix (V^T)_{C :}
+    # as a product of Givens only.
+    # In what follows: simply a copy-paste of _prepare_slater_determinant_jw
+    # /!\ to be refactored to avoid redundant code.
     left_transformation_matrix = left_unitary.T[list(occupied_orbitals)]
     
     m, n = left_transformation_matrix.shape
@@ -164,7 +170,7 @@ def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
                 current_matrix = apply_matrix_to_slices(
                     current_matrix, givens_mat, [(Ellipsis, j - 1), (Ellipsis, j)]
                 )
-
+    # output gates in reverse order
     yield from reversed(left_decomposition)
     yield from reversed(right_decomposition)
   
