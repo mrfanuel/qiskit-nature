@@ -99,5 +99,5 @@ def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
     decomposition, left_unitary = fermionic_gaussian_decomposition_jw(
         register, transformation_matrix
     )
-    yield from reversed(decomposition)
     yield from _prepare_slater_determinant_jw(register, left_unitary.T[list(occupied_orbitals)])
+    yield from reversed(decomposition)
