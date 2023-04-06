@@ -81,6 +81,29 @@ def _prepare_slater_determinant_jw(
     yield from reversed(decomposition)
 
 
+
+# def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
+#     register: QuantumRegister, transformation_matrix: np.ndarray, occupied_orbitals: Sequence[int]
+# ) -> Iterable[Tuple[Gate, Tuple[Qubit, ...]]]:
+#     """Prepare a fermionic Gaussian state under the Jordan-Wigner Transform.
+
+#     Args:
+#         register: The register containing the qubits to use
+#         transformation_matrix: The transformation matrix describing
+#             the fermionic Gaussian state
+#         occupied_orbitals: The pseudo-particle orbitals to fill
+
+#     Yields:
+#         (gate, qubits) pairs describing the operations, where the qubits
+#         are provided in a tuple
+#     """
+#     decomposition, left_unitary = fermionic_gaussian_decomposition_jw(
+#         register, transformation_matrix
+#     )
+#     yield from _prepare_slater_determinant_jw(register, left_unitary.T[list(occupied_orbitals)])
+#     yield from reversed(decomposition)
+    
+    
 def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
     register: QuantumRegister, transformation_matrix: np.ndarray, occupied_orbitals: Sequence[int]
 ) -> Iterable[Tuple[Gate, Tuple[Qubit, ...]]]:
@@ -96,8 +119,52 @@ def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
         (gate, qubits) pairs describing the operations, where the qubits
         are provided in a tuple
     """
-    decomposition, left_unitary = fermionic_gaussian_decomposition_jw(
+    right_decomposition, left_unitary = fermionic_gaussian_decomposition_jw(
         register, transformation_matrix
     )
-    yield from _prepare_slater_determinant_jw(register, left_unitary.T[list(occupied_orbitals)])
-    yield from reversed(decomposition)
+    
+    left_transformation_matrix = left_unitary.T[list(occupied_orbitals)]
+    
+    m, n = left_transformation_matrix.shape
+
+    # set the first n_particles qubits to 1
+    for i in range(m):
+        yield XGate(), (register[i],)
+
+    # if all orbitals are filled, no further operations are needed
+    if m == n:
+        return
+
+    current_matrix = left_transformation_matrix
+
+    # zero out top right corner by rotating rows; this is a no-op
+    for j in reversed(range(n - m + 1, n)):
+        # Zero out entries in column j
+        for i in range(m - n + j):
+            # Zero out entry in row i if needed
+            if not np.isclose(current_matrix[i, j], 0.0):
+                givens_mat = givens_matrix(current_matrix[i + 1, j], current_matrix[i, j])
+                current_matrix = apply_matrix_to_slices(current_matrix, givens_mat, [i + 1, i])
+
+    # decompose matrix into Givens rotations
+    left_decomposition: List[Tuple[Gate, Tuple[Qubit, ...]]] = []
+    for i in range(m):
+        # zero out the columns in row i
+        for j in range(n - m + i, i, -1):
+            if not np.isclose(current_matrix[i, j], 0.0):
+                # compute Givens rotation
+                givens_mat = givens_matrix(current_matrix[i, j - 1], current_matrix[i, j])
+                theta = np.arccos(np.real(givens_mat[0, 0]))
+                phi = np.angle(givens_mat[0, 1])
+                # add operations
+                left_decomposition.append(
+                    (XXPlusYYGate(2 * theta, phi - np.pi / 2), (register[j], register[j - 1]))
+                )
+                # update matrix
+                current_matrix = apply_matrix_to_slices(
+                    current_matrix, givens_mat, [(Ellipsis, j - 1), (Ellipsis, j)]
+                )
+
+    yield from reversed(left_decomposition)
+    yield from reversed(right_decomposition)
+  
