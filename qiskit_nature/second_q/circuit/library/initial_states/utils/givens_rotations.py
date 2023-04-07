@@ -83,27 +83,6 @@ def _prepare_slater_determinant_jw(
     yield from reversed(decomposition)
 
 
-
-# def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
-#     register: QuantumRegister, transformation_matrix: np.ndarray, occupied_orbitals: Sequence[int]
-# ) -> Iterable[Tuple[Gate, Tuple[Qubit, ...]]]:
-#     """Prepare a fermionic Gaussian state under the Jordan-Wigner Transform.
-
-#     Args:
-#         register: The register containing the qubits to use
-#         transformation_matrix: The transformation matrix describing
-#             the fermionic Gaussian state
-#         occupied_orbitals: The pseudo-particle orbitals to fill
-
-#     Yields:
-#         (gate, qubits) pairs describing the operations, where the qubits
-#         are provided in a tuple
-#     """
-#     decomposition, left_unitary = fermionic_gaussian_decomposition_jw(
-#         register, transformation_matrix
-#     )
-#     yield from _prepare_slater_determinant_jw(register, left_unitary.T[list(occupied_orbitals)])
-#     yield from reversed(decomposition)
     
     
 def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
