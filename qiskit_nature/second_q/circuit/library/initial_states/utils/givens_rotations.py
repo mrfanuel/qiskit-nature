@@ -10,6 +10,8 @@
 # copyright notice, and modified files need to carry a notice indicating
 # that they have been altered from the originals.
 
+# /!\ this code has been modified !
+
 """Private helper functions for initial states."""
 
 from __future__ import annotations
