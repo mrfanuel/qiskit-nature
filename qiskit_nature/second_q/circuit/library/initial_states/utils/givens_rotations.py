@@ -55,9 +55,8 @@ def _gates_from_transformation_matrix(
     acting on specific columns.
 
     Args:
-        register: The register containing the qubits to use
-        transformation_matrix: The transformation matrix describing
-            the Slater determinant.
+        register: The register containing the qubits to use.
+        transformation_matrix: The transformation matrix describing the Slater determinant.
 
     Yields:
         (gate, qubits) pairs describing the operations in the order they have to appear in the circuit, where the qubits
@@ -113,8 +112,7 @@ def _prepare_fermionic_gaussian_state_jw(  # pylint: disable=invalid-name
 
     Args:
         register: The register containing the qubits to use
-        transformation_matrix: The transformation matrix describing
-            the fermionic Gaussian state
+        transformation_matrix: The transformation matrix describing the fermionic Gaussian state
         occupied_orbitals: The pseudo-particle orbitals to fill
 
     Yields:
