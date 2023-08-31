@@ -11,10 +11,21 @@
 # that they have been altered from the originals.
 
 # /!\ this code has been modified !
+# the basic correction is that the output of _prepare_fermionic_gaussian_state_jw
+#
+#    yield from _prepare_slater_determinant_jw(register, left_unitary.T[list(occupied_orbitals)])
+#    yield from reversed(decomposition)
+#
+# I have corrected it as follows:
+#
+#    yield from left_decomposition_reversed
+#    yield from right_decomposition_reversed
+#
 # most of the content of _prepare_slater_determinant_jw has been put into 
-# _gates_from_transformation_matrix, so that it can be reused into 
+# _gates_from_transformation_matrix, 
+# so that it can be reused into 
 # _prepare_fermionic_gaussian_state_jw
-
+#
 """Private helper functions for initial states."""
 
 from __future__ import annotations
