@@ -59,9 +59,8 @@ def _gates_from_transformation_matrix(
         transformation_matrix: The transformation matrix describing the Slater determinant.
 
     Yields:
-        (gate, qubits) pairs describing the operations in the order they have to appear in the circuit, where the qubits
-        are provided in a tuple.
-        Note that the corresponding gates in the reverse order wrt to the decomposition of V.
+        (gate, qubits) pairs describing the operations in the order they have to appear in the circuit, where the qubits are provided in a tuple.
+        Note that the corresponding gates are in the reverse order with respect to the decomposition of V.
     """
     m, n = transformation_matrix.shape
 
