@@ -43,6 +43,7 @@ avogadro
 äquivalenzverbot
 bac
 backend
+backends
 barkoutsos
 bb
 bergholm
@@ -57,7 +58,9 @@ boolean
 bools
 bopes
 boson
+bosons
 bosonic
+bosonicop
 bravyi
 calcinfo
 cargs
@@ -70,6 +73,7 @@ chc
 chiral
 chirality
 chkfile
+cholesky
 chuang
 ci
 clbit
@@ -146,6 +150,7 @@ eigen
 eigenfunctions
 eigensolution
 eigensolver
+eigensolverfactory
 eigensolvers
 eigenstate
 eigenstateresult
@@ -221,6 +226,8 @@ hijs
 hilbert
 histidine
 hjo
+hsplit
+hstack
 html
 https
 hubbard
@@ -333,6 +340,7 @@ metadata
 meth
 methionine
 microsoft
+miessen
 minao
 mixin
 miyazawa
@@ -518,9 +526,11 @@ sklearn
 sl
 slater
 soham
+somma
 sp
 sparsearray
 sparselabelop
+sparsepauliop
 spinop
 springer
 spsa
@@ -621,6 +631,8 @@ vmax
 vmin
 vqe
 vscf
+vsplit
+vstack
 vwn
 vx
 vy

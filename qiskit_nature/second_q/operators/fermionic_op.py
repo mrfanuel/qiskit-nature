@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from collections.abc import Collection, Mapping
-from typing import cast, Iterator
+from typing import Iterator, Sequence
 
 import numpy as np
 from scipy.sparse import csc_matrix
@@ -128,17 +128,6 @@ class FermionicOp(SparseLabelOp):
     .. code-block:: python
 
       FermionicOp({"+_0 -_1": 1j}, num_spin_orbitals=2).adjoint()
-
-    In principle, you can also add `FermionicOp` and integers, but the only valid case is the
-    addition of `0 + FermionicOp`. This makes the `sum` operation from the example above possible
-    and it is useful in the following scenario:
-
-    .. code-block:: python
-
-        fermion = 0
-        for i in some_iterable:
-            # some processing
-            fermion += FermionicOp(somedata)
 
     **Iteration**
 
@@ -255,8 +244,7 @@ class FermionicOp(SparseLabelOp):
 
         for key in tensor:
             if key == "":
-                # TODO: deal with complexity
-                data[""] = cast(float, tensor[key])
+                data[""] = tensor[key]
                 continue
 
             mat = tensor[key]
@@ -307,6 +295,19 @@ class FermionicOp(SparseLabelOp):
             #   lbl[2:] corresponds to the index
             terms = [(lbl[0], int(lbl[2:])) for lbl in label.split()]
             yield (terms, self[label])
+
+    @classmethod
+    def from_terms(cls, terms: Sequence[tuple[list[tuple[str, int]], _TCoeff]]) -> FermionicOp:
+        data = {
+            " ".join(f"{action}_{index}" for action, index in label): value
+            for label, value in terms
+        }
+        return cls(data)
+
+    def _permute_term(
+        self, term: list[tuple[str, int]], permutation: Sequence[int]
+    ) -> list[tuple[str, int]]:
+        return [(action, permutation[index]) for action, index in term]
 
     def compose(self, other: FermionicOp, qargs=None, front: bool = False) -> FermionicOp:
         if not isinstance(other, FermionicOp):

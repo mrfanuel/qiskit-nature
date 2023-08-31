@@ -23,7 +23,7 @@ from __future__ import annotations
 import re
 from collections.abc import Collection, Mapping
 from collections import defaultdict
-from typing import cast, Iterator
+from typing import Iterator, Sequence
 from fractions import Fraction
 from functools import partial, reduce
 
@@ -300,8 +300,7 @@ class SpinOp(SparseLabelOp):
 
         for key in tensor:
             if key == "":
-                # TODO: deal with complexity
-                data[""] = cast(float, tensor[key])
+                data[""] = tensor[key]
                 continue
 
             mat = tensor[key]
@@ -339,7 +338,7 @@ class SpinOp(SparseLabelOp):
         Returns:
             The X spin operator for ``spin``.
         """
-        return cls({"X_0": 1.0}, spin=spin, copy=False)
+        return cls({"X_0": 1.0}, spin=spin, num_spins=1, copy=False)
 
     @classmethod
     def y(cls, spin: float | Fraction = Fraction(1, 2)) -> SpinOp:
@@ -348,7 +347,7 @@ class SpinOp(SparseLabelOp):
         Returns:
             The Y spin operator for ``spin``.
         """
-        return cls({"Y_0": 1.0}, spin=spin, copy=False)
+        return cls({"Y_0": 1.0}, spin=spin, num_spins=1, copy=False)
 
     @classmethod
     def z(cls, spin: float | Fraction = Fraction(1, 2)) -> SpinOp:
@@ -357,7 +356,7 @@ class SpinOp(SparseLabelOp):
         Returns:
             The Z spin operator for ``spin``.
         """
-        return cls({"Z_0": 1.0}, spin=spin, copy=False)
+        return cls({"Z_0": 1.0}, spin=spin, num_spins=1, copy=False)
 
     @classmethod
     def one(cls, spin: float | Fraction = Fraction(1, 2)) -> SpinOp:
@@ -415,6 +414,19 @@ class SpinOp(SparseLabelOp):
             for char, index, exp in self._split_label(label):
                 terms += [(char, index)] * exp
             yield (terms, self[label])
+
+    def _permute_term(
+        self, term: list[tuple[str, int]], permutation: Sequence[int]
+    ) -> list[tuple[str, int]]:
+        return [(action, permutation[index]) for action, index in term]
+
+    @classmethod
+    def from_terms(cls, terms: Sequence[tuple[list[tuple[str, int]], _TCoeff]]) -> SpinOp:
+        data = {
+            " ".join(f"{action}_{index}" for action, index in label): value
+            for label, value in terms
+        }
+        return cls(data)
 
     def conjugate(self) -> SpinOp:
         """Returns the conjugate of the ``SpinOp``.
@@ -590,7 +602,11 @@ class SpinOp(SparseLabelOp):
         # reorder and expand
         simplified_op = self.index_order().simplify()
 
-        final_matrix = np.zeros((dim, dim), dtype=np.complex128)
+        # the size of the final matrix needs to adjust for the total number of spins which this
+        # operator acts on
+        final_dim = dim**self.register_length
+        final_matrix = np.zeros((final_dim, final_dim), dtype=np.complex128)
+
         for label, coeff in simplified_op.items():
             matrix_per_idx = {}
             # after .simplify() all exponents will be 1,
@@ -603,7 +619,9 @@ class SpinOp(SparseLabelOp):
                 matrix_per_idx[idx] = matrix_per_idx[idx] @ char_map.get(char, i_mat)
 
             # fill out empty indices with identity
-            dense_matrix_per_idx = [matrix_per_idx.get(i, i_mat) for i in range(len(self))]
+            dense_matrix_per_idx = [
+                matrix_per_idx.get(i, i_mat) for i in range(self.register_length)
+            ]
             # add weighted kronecker product to final matrix
             final_matrix += coeff * tensorall(np.asarray(dense_matrix_per_idx))
 

@@ -14,7 +14,7 @@
 
 from __future__ import annotations
 
-from typing import Collection, Iterator, Mapping
+from typing import Collection, Iterator, Mapping, Sequence
 
 import unittest
 from test import QiskitNatureTestCase
@@ -24,6 +24,7 @@ import numpy as np
 from qiskit.circuit import Parameter
 
 from qiskit_nature.second_q.operators import PolynomialTensor, SparseLabelOp
+from qiskit_nature.second_q.operators.sparse_label_op import _TCoeff
 
 
 a = Parameter("a")
@@ -80,6 +81,15 @@ class DummySparseLabelOp(SparseLabelOp):
         pass
 
     def terms(self) -> Iterator[tuple[list[tuple[str, int]], complex]]:
+        pass
+
+    @classmethod
+    def from_terms(cls, terms: Sequence[tuple[list[tuple[str, int]], _TCoeff]]) -> SparseLabelOp:
+        pass
+
+    def _permute_term(
+        self, term: list[tuple[str, int]], permutation: Sequence[int]
+    ) -> list[tuple[str, int]]:
         pass
 
     def transpose(self) -> SparseLabelOp:
@@ -145,6 +155,18 @@ class TestSparseLabelOp(QiskitNatureTestCase):
 
         with self.subTest("new key"):
             test_op = DummySparseLabelOp(op1) + DummySparseLabelOp(op3)
+            target_op = DummySparseLabelOp(
+                {
+                    "+_0 -_1": 0.5,
+                    "+_0 -_2": 1.0,
+                    "+_0 -_3": 3.0,
+                },
+            )
+
+            self.assertEqual(test_op, target_op)
+
+        with self.subTest("sum"):
+            test_op = sum([DummySparseLabelOp(op1), DummySparseLabelOp(op3)])
             target_op = DummySparseLabelOp(
                 {
                     "+_0 -_1": 0.5,

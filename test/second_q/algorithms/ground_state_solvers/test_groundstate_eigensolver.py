@@ -251,16 +251,17 @@ class TestGroundStateEigensolver(QiskitNatureTestCase):
             solver = NumPyMinimumEigensolverFactory()
         calc = GroundStateEigensolver(self.qubit_converter, solver)
         res = calc.solve(self.electronic_structure_problem)
+        res.formatting_precision = 6
         with contextlib.redirect_stdout(io.StringIO()) as out:
             print(res)
         # do NOT change the below! Lines have been truncated as to not force exact numerical matches
         expected = """\
             === GROUND STATE ENERGY ===
 
-            * Electronic ground state energy (Hartree): -1.857
-              - computed part:      -1.857
-            ~ Nuclear repulsion energy (Hartree): 0.719
-            > Total ground state energy (Hartree): -1.137
+            * Electronic ground state energy (Hartree): -1.857275
+              - computed part:      -1.857275
+            ~ Nuclear repulsion energy (Hartree): 0.719969
+            > Total ground state energy (Hartree): -1.137306
 
             === MEASURED OBSERVABLES ===
 
@@ -268,13 +269,13 @@ class TestGroundStateEigensolver(QiskitNatureTestCase):
 
             === DIPOLE MOMENTS ===
 
-            ~ Nuclear dipole moment (a.u.): [0.0  0.0  1.38
+            ~ Nuclear dipole moment (a.u.): [0.0  0.0  1.388949]
 
               0:
-              * Electronic dipole moment (a.u.): [0.0  0.0  1.38
-                - computed part:      [0.0  0.0  1.38
-              > Dipole moment (a.u.): [0.0  0.0  0.0]  Total: 0.
-                             (debye): [0.0  0.0  0.0]  Total: 0.
+              * Electronic dipole moment (a.u.): [0.0  0.0  1.388949]
+                - computed part:      [0.0  0.0  1.388949]
+              > Dipole moment (a.u.): [0.0  0.0  0.0]  Total: 0.0
+                             (debye): [0.0  0.0  0.0]  Total: 0.0
         """
         for truth, expected in zip(out.getvalue().split("\n"), expected.split("\n")):
             assert truth.strip().startswith(expected.strip())
@@ -287,8 +288,30 @@ class TestGroundStateEigensolver(QiskitNatureTestCase):
             solver = VQEUCCFactory(Estimator(), UCCSD(), SLSQP())
         calc = GroundStateEigensolver(self.qubit_converter, solver)
         res = calc.solve(self.electronic_structure_problem)
-
+        # pylint: disable=no-member
         np.testing.assert_array_equal(solver.initial_point.to_numpy_array(), [0.0, 0.0, 0.0])
+        self.assertAlmostEqual(res.total_energies[0], self.reference_energy, places=6)
+
+    def test_default_initial_point_with_imaginary_ucc(self):
+        """Test when using the default initial point and the imaginary parts of the UCC ansatz."""
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", category=DeprecationWarning)
+            ansatz = UCCSD(
+                self.num_spatial_orbitals,
+                self.num_particles,
+                self.qubit_converter,
+                include_imaginary=True,
+            )
+
+            solver = VQEUCCFactory(Estimator(), ansatz, SLSQP())
+
+        calc = GroundStateEigensolver(self.qubit_converter, solver)
+        res = calc.solve(self.electronic_structure_problem)
+
+        # pylint: disable=no-member
+        np.testing.assert_array_equal(
+            solver.initial_point.to_numpy_array(), [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        )
         self.assertAlmostEqual(res.total_energies[0], self.reference_energy, places=6)
 
     def test_vqe_ucc_factory_with_user_initial_point(self):
@@ -314,7 +337,7 @@ class TestGroundStateEigensolver(QiskitNatureTestCase):
             solver = VQEUCCFactory(Estimator(), UCCSD(), SLSQP(), initial_point=initial_point)
         calc = GroundStateEigensolver(self.qubit_converter, solver)
         res = calc.solve(self.electronic_structure_problem)
-
+        # pylint: disable=no-member
         np.testing.assert_array_almost_equal(
             solver.initial_point.to_numpy_array(), self.mp2_initial_point
         )
@@ -322,19 +345,20 @@ class TestGroundStateEigensolver(QiskitNatureTestCase):
 
     def test_vqe_ucc_factory_with_reps(self):
         """Test when using the default initial point with repeated evolved operators."""
-        ansatz = UCCSD(
-            qubit_converter=self.qubit_converter,
-            num_particles=self.num_particles,
-            num_spatial_orbitals=self.num_spatial_orbitals,
-            reps=2,
-        )
-
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=DeprecationWarning)
+            ansatz = UCCSD(
+                qubit_converter=self.qubit_converter,
+                num_particles=self.num_particles,
+                num_spatial_orbitals=self.num_spatial_orbitals,
+                reps=2,
+            )
+
             solver = VQEUCCFactory(Estimator(), ansatz, SLSQP())
+
         calc = GroundStateEigensolver(self.qubit_converter, solver)
         res = calc.solve(self.electronic_structure_problem)
-
+        # pylint: disable=no-member
         np.testing.assert_array_almost_equal(
             solver.initial_point.to_numpy_array(), np.zeros(6, dtype=float)
         )
@@ -347,19 +371,20 @@ class TestGroundStateEigensolver(QiskitNatureTestCase):
 
         initial_point = MP2InitialPoint()
 
-        ansatz = UCCSD(
-            qubit_converter=self.qubit_converter,
-            num_particles=self.num_particles,
-            num_spatial_orbitals=self.num_spatial_orbitals,
-            reps=2,
-        )
-
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=DeprecationWarning)
+            ansatz = UCCSD(
+                qubit_converter=self.qubit_converter,
+                num_particles=self.num_particles,
+                num_spatial_orbitals=self.num_spatial_orbitals,
+                reps=2,
+            )
+
             solver = VQEUCCFactory(Estimator(), ansatz, SLSQP(), initial_point=initial_point)
+
         calc = GroundStateEigensolver(self.qubit_converter, solver)
         res = calc.solve(self.electronic_structure_problem)
-
+        # pylint: disable=no-member
         np.testing.assert_array_almost_equal(
             solver.initial_point.to_numpy_array(), np.tile(self.mp2_initial_point, 2)
         )

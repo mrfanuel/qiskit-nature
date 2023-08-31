@@ -34,7 +34,6 @@ interchangeably.
 
 .. autosummary::
    :toctree: ../stubs/
-   :template: autosummary/class_with_inherited_members.rst
    :nosignatures:
 
    SymmetricTwoBodyIntegrals
@@ -144,7 +143,7 @@ class SymmetricTwoBodyIntegrals(Tensor, ABC):
         """
         raise NotImplementedError()
 
-    def __array_wrap__(self, array: ARRAY_TYPE, context=None) -> SymmetricTwoBodyIntegrals:
+    def __array_wrap__(self, array: ARRAY_TYPE, context=None) -> Tensor:
         try:
             return self.__class__(array)
         except ValueError:
@@ -268,7 +267,7 @@ class S4Integrals(SymmetricTwoBodyIntegrals):
         eri = np.zeros((npair, npair))
         return cls(eri)
 
-    def __array_wrap__(self, array: ARRAY_TYPE, context=None) -> SymmetricTwoBodyIntegrals:
+    def __array_wrap__(self, array: ARRAY_TYPE, context=None) -> Tensor:
         if len(array.shape) == 4:
             # NOTE: some operations may require implicit unfolding to S1Integrals
             return S1Integrals(array)
@@ -375,7 +374,7 @@ class S8Integrals(SymmetricTwoBodyIntegrals):
         eri = np.zeros(npair * (npair + 1) // 2)
         return cls(eri)
 
-    def __array_wrap__(self, array: ARRAY_TYPE, context=None) -> SymmetricTwoBodyIntegrals:
+    def __array_wrap__(self, array: ARRAY_TYPE, context=None) -> Tensor:
         if len(array.shape) == 4:
             # NOTE: some operations may require implicit unfolding to S1Integrals
             return S1Integrals(array)
